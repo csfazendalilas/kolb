@@ -1,0 +1,482 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kolb-MFC: Plano de Ensino Individualizado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .view {
+            display: none;
+        }
+        .active-view {
+            display: block;
+        }
+        /* Estilização para o formato de botões de rádio */
+        .radio-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .radio-group label {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 2.5rem;
+            height: 2.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            font-weight: 500;
+        }
+        .radio-group input[type="radio"] {
+            display: none;
+        }
+        .radio-group input[type="radio"]:checked + label {
+            background-color: #0d9488; /* teal-600 */
+            color: white;
+            border-color: #0d9488;
+        }
+        /* Estilo para destacar pergunta com erro */
+        .question-error {
+            border: 2px solid #ef4444; /* red-500 */
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+            transition: all 0.3s ease-in-out;
+        }
+        .error-message-specific {
+            display: none;
+            color: #dc2626; /* red-600 */
+            font-size: 0.875rem; /* text-sm */
+            margin-top: 0.5rem;
+            text-align: right;
+        }
+        .error-message-specific.show {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div id="app" class="max-w-4xl mx-auto p-4 md:p-8">
+
+        <!-- Cabeçalho -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-teal-700">Kolb-MFC</h1>
+            <p class="text-md text-gray-600 mt-2">Plano de Ensino Individualizado na Preceptoria em MFC</p>
+        </header>
+
+        <!-- Vista Inicial -->
+        <div id="home-view" class="view active-view bg-white p-6 md:p-8 rounded-xl shadow-md">
+            <h2 class="text-2xl font-bold mb-4">Bem-vindo(a)!</h2>
+            <p class="mb-6">Esta ferramenta foi desenvolvida para apoiar residentes e preceptores de Medicina de Família e Comunidade (MFC) na construção de uma jornada de aprendizagem mais eficaz e personalizada.</p>
+            <p class="mb-6">O aplicativo aplica o Inventário de Estilos de Aprendizagem de Kolb (LSI) para identificar seu perfil e, a partir dele, sugere estratégias de ensino e feedback alinhadas às suas preferências.</p>
+            
+            <div class="mt-8 flex flex-col items-center gap-6">
+                <button onclick="changeView('test-view')" class="w-full md:w-auto bg-teal-600 text-white font-bold py-4 px-8 rounded-lg hover:bg-teal-700 transition-colors shadow-lg text-lg">
+                    Iniciar Inventário Completo
+                </button>
+
+                <div class="w-full border-t border-gray-100 pt-6 mt-4">
+                    <p class="text-sm font-semibold text-gray-400 uppercase tracking-wider text-center mb-4">Acesso Rápido para Testes</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <button onclick="showStylePreview('Divergente')" class="bg-gray-100 hover:bg-teal-50 text-teal-700 py-2 px-3 rounded text-sm font-medium transition-colors border border-gray-200">Divergente</button>
+                        <button onclick="showStylePreview('Assimilador')" class="bg-gray-100 hover:bg-teal-50 text-teal-700 py-2 px-3 rounded text-sm font-medium transition-colors border border-gray-200">Assimilador</button>
+                        <button onclick="showStylePreview('Convergente')" class="bg-gray-100 hover:bg-teal-50 text-teal-700 py-2 px-3 rounded text-sm font-medium transition-colors border border-gray-200">Convergente</button>
+                        <button onclick="showStylePreview('Acomodador')" class="bg-gray-100 hover:bg-teal-50 text-teal-700 py-2 px-3 rounded text-sm font-medium transition-colors border border-gray-200">Acomodador</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vista do Teste -->
+        <div id="test-view" class="view bg-white p-6 md:p-8 rounded-xl shadow-md">
+            <h2 class="text-2xl font-bold mb-2">Inventário de Estilos de Aprendizagem</h2>
+            <p class="mb-6 text-gray-600">Para cada grupo de sentenças, classifique as quatro afirmações. Atribua <strong>1</strong> para a que menos se parece com você, e assim por diante, até <strong>4</strong> para a que melhor descreve como você aprende. Cada rank (1, 2, 3, 4) deve ser usado apenas uma vez por grupo.</p>
+            <form id="kolb-form" novalidate>
+                <div id="questions-container" class="space-y-10"></div>
+                <div class="mt-8 flex flex-col md:flex-row gap-4">
+                    <button type="submit" class="w-full md:w-auto bg-teal-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-700 transition-colors shadow">Ver Meu Resultado</button>
+                    <button type="button" onclick="changeView('home-view')" class="w-full md:w-auto bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">Cancelar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Vista de Resultados -->
+        <div id="results-view" class="view bg-white p-6 md:p-8 rounded-xl shadow-md">
+            <div class="flex justify-between items-start mb-4">
+                <h2 class="text-2xl font-bold">Seu Resultado</h2>
+                <button onclick="changeView('home-view')" class="text-teal-600 hover:text-teal-800 font-medium text-sm">← Voltar</button>
+            </div>
+            
+            <div class="flex flex-col md:grid md:grid-cols-2 md:gap-8">
+                <!-- Resultados Textuais -->
+                <div class="mb-8 md:mb-0">
+                    <h3 class="text-xl font-semibold mb-2">Seu Estilo de Aprendizagem é:</h3>
+                    <p id="learning-style-result" class="text-3xl font-bold text-teal-700"></p>
+                    <div class="mt-6">
+                        <h4 class="font-semibold text-lg mb-2">Pontuações:</h4>
+                        <ul class="space-y-2 text-gray-700">
+                            <li><strong>EC</strong> (Experiência Concreta): <span id="ec-score"></span></li>
+                            <li><strong>OR</strong> (Observação Reflexiva): <span id="or-score"></span></li>
+                            <li><strong>CA</strong> (Conceituação Abstrata): <span id="ca-score"></span></li>
+                            <li><strong>EA</strong> (Experimentação Ativa): <span id="ea-score"></span></li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- Contentor do Gráfico -->
+                <div class="w-full h-80 md:h-full">
+                    <canvas id="kolb-chart"></canvas>
+                </div>
+            </div>
+            <div id="recommendations" class="mt-8 pt-6 border-t border-gray-200">
+                <h3 class="text-xl font-semibold mb-4">Recomendações Pedagógicas</h3>
+                <div id="recommendations-content"></div>
+            </div>
+            <div class="mt-8 text-center">
+                <button onclick="changeView('home-view')" class="bg-teal-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-700 transition-colors shadow">Concluir</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DADOS ---
+        const questions = [
+            { stem: "Quando aprendo:", options: { ec: "Gosto de lidar com meus sentimentos.", or: "Gosto de observar e escutar.", ca: "Gosto de pensar sobre ideias.", ea: "Gosto de estar fazendo coisas." } },
+            { stem: "Aprendo melhor quando:", options: { or: "Escuto e observo com cuidado.", ca: "Confio na análise lógica.", ec: "Confio nos meus sentimentos.", ea: "Trabalho duro para ter as coisas prontas." } },
+            { stem: "Quando estou aprendendo:", options: { ec: "Sou sentimental.", ea: "Sou ativo.", or: "Sou observador.", ca: "Sou lógico." } },
+            { stem: "Eu aprendo por:", options: { ea: "Fazer.", ec: "Sentir.", or: "Observar.", ca: "Pensar." } },
+            { stem: "Quando aprendo:", options: { ec: "Estou aberto a novas experiências.", or: "Olho todos os lados da questão.", ca: "Gosto de analisar as coisas.", ea: "Gosto de experimentar." } },
+            { stem: "Quando estou aprendendo:", options: { ca: "Sou uma pessoa racional.", ea: "Sou uma pessoa ativa.", ec: "Sou uma pessoa intuitiva.", or: "Sou uma pessoa reflexiva." } },
+            { stem: "Aprendo melhor com:", options: { ca: "Observação.", ec: "Relacionamentos pessoais.", or: "Teorias racionais.", ea: "Oportunidade de experimentar." } },
+            { stem: "Quando aprendo:", options: { ca: "Gosto de ideias e teorias.", ea: "Gosto de ter utilidade prática.", ec: "Levo as pessoas e seus sentimentos em conta.", or: "Levo em conta todas as alternativas." } },
+            { stem: "Aprendo melhor quando:", options: { ea: "Confio nas minhas observações.", ca: "Confio nas minhas ideias.", ec: "Confio nos meus sentimentos.", or: "Posso ser lógico e racional." } },
+            { stem: "Quando estou aprendendo:", options: { ea: "Sou uma pessoa responsável.", or: "Sou uma pessoa reservada.", ca: "Sou uma pessoa racional.", ec: "Sou uma pessoa de grupo." } },
+            { stem: "Quando aprendo:", options: { or: "Gosto de ver o quadro geral.", ea: "Gosto de ir direto ao ponto.", ca: "Sigo a lógica.", ec: "Gosto de saber o que os outros pensam." } },
+            { stem: "Eu aprendo por:", options: { ca: "Análise.", ea: "Prática.", ec: "Intuição.", or: "Observação cuidadosa." } }
+        ];
+
+        const recommendationsData = {
+            Divergente: {
+                description: "Pessoas com estilo Divergente são boas em ver situações concretas de diferentes pontos de vista. A abordagem é observar em vez de agir. Gostam de gerar ideias e têm amplos interesses culturais.",
+                methods: ["Discussões em grupo (brainstorming)", "Estudos de caso com foco em pessoas e narrativas", "Sessões de feedback que exploram sentimentos e relações", "Atividades que envolvam coleta de informações e escuta ativa"],
+                feedback: "O feedback deve ser pessoal, descritivo e observacional. Explore como as situações fizeram o residente se sentir e o que ele observou nos outros."
+            },
+            Assimilador: {
+                description: "Pessoas com estilo Assimilador são hábeis em compreender uma vasta gama de informações e organizá-las de forma lógica e concisa. Focam mais em conceitos abstratos do que em pessoas.",
+                methods: ["Leitura crítica de artigos e diretrizes", "Aulas expositivas e seminários teóricos", "Construção de mapas conceituais e modelos explicativos", "Análise de dados e estatísticas de saúde da comunidade"],
+                feedback: "O feedback deve ser analítico, baseado em evidências e focado na lógica do raciocínio clínico. Aponte para a consistência teórica."
+            },
+            Convergente: {
+                description: "Pessoas com estilo Convergente são melhores na aplicação prática de ideias e teorias. Têm habilidade para resolver problemas e tomar decisões. Preferem lidar com tarefas técnicas.",
+                methods: ["Simulações realísticas e role-playing de atendimentos", "Projetos de melhoria de processos na UBS", "Resolução de problemas clínicos estruturados", "Treinamento de habilidades e procedimentos práticos"],
+                feedback: "O feedback deve ser pragmático, direto e focado nos resultados e na eficácia da solução. 'Isso funcionou? Como podemos tornar mais eficiente?'"
+            },
+            Acomodador: {
+                description: "Pessoas com estilo Acomodador aprendem melhor através da experiência prática e 'mão na massa'. Gostam de se envolver em novas experiências e desafios, agindo por intuição.",
+                methods: ["Atividades práticas e atendimentos diretos (aprender fazendo)", "Projetos comunitários e visitas domiciliares", "Oficinas e atividades em grupo que exijam ação", "Experimentar diferentes abordagens de comunicação com pacientes"],
+                feedback: "O feedback deve ser exploratório e encorajar a experimentação. Foque no que foi aprendido com a ação, mesmo que o resultado não tenha sido o esperado."
+            }
+        };
+
+        // --- LÓGICA DA APLICAÇÃO ---
+        let currentView = 'home-view';
+        let chartInstance = null;
+
+        function changeView(viewId) {
+            document.getElementById(currentView).classList.remove('active-view');
+            document.getElementById(viewId).classList.add('active-view');
+            currentView = viewId;
+            window.scrollTo(0, 0);
+        }
+
+        // Função para testar os perfis sem preencher o formulário
+        function showStylePreview(style) {
+            let ea_or, ca_ec, scores;
+            
+            // Define coordenadas fictícias para cada quadrante e pontuações de exemplo
+            switch(style) {
+                case 'Divergente':
+                    ea_or = -15; ca_ec = -15;
+                    scores = { ec: 35, or: 35, ca: 20, ea: 20 };
+                    break;
+                case 'Assimilador':
+                    ea_or = -15; ca_ec = 15;
+                    scores = { ec: 20, or: 35, ca: 35, ea: 20 };
+                    break;
+                case 'Convergente':
+                    ea_or = 15; ca_ec = 15;
+                    scores = { ec: 20, or: 20, ca: 35, ea: 35 };
+                    break;
+                case 'Acomodador':
+                    ea_or = 15; ca_ec = -15;
+                    scores = { ec: 35, or: 20, ca: 20, ea: 35 };
+                    break;
+            }
+
+            // Atualiza o UI com os dados de teste
+            document.getElementById('ec-score').textContent = scores.ec;
+            document.getElementById('or-score').textContent = scores.or;
+            document.getElementById('ca-score').textContent = scores.ca;
+            document.getElementById('ea-score').textContent = scores.ea;
+            document.getElementById('learning-style-result').textContent = style;
+            
+            displayRecommendations(style);
+            createChart(ea_or, ca_ec);
+            changeView('results-view');
+        }
+
+        function handleRankSelection(clickedRadio) {
+            const qIndex = clickedRadio.dataset.qindex;
+            const rank = clickedRadio.value;
+            const currentName = clickedRadio.name;
+
+            const allRadiosInQuestion = document.querySelectorAll(`input[data-qindex="${qIndex}"]`);
+
+            allRadiosInQuestion.forEach(radio => {
+                if (radio.name !== currentName && radio.value === rank) {
+                    radio.checked = false;
+                }
+            });
+        }
+
+        function populateQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+            const ranks = [1, 2, 3, 4];
+
+            questions.forEach((q, qIndex) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question-block p-4 border border-gray-200 rounded-lg';
+                questionDiv.id = `question-block-${qIndex}`;
+
+                let headerHTML = `<p class="font-semibold mb-4">${qIndex + 1}. ${q.stem}</p>`;
+
+                let scaleHTML = `
+                    <div class="flex justify-end mb-2">
+                        <div class="w-full sm:w-auto sm:min-w-[11.5rem]">
+                            <div class="flex justify-between items-center text-center font-bold text-gray-700 px-1">
+                                <span>1</span><span>2</span><span>3</span><span>4</span>
+                            </div>
+                            <div class="relative w-full h-1.5 bg-gray-200 rounded-full mt-1">
+                                <div class="absolute h-1.5 bg-gradient-to-r from-teal-200 to-teal-500 rounded-full w-full"></div>
+                            </div>
+                            <div class="flex justify-between items-center text-center font-medium text-gray-500 text-xs mt-1 px-1">
+                                <span>Menos</span><span>Mais</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                let errorContainerHTML = `<div id="error-container-${qIndex}" class="error-message-specific">Por favor, use os ranks 1, 2, 3 e 4 exatamente uma vez.</div>`;
+
+                let optionsHTML = '<div class="space-y-4 mt-4">';
+                const shuffledKeys = Object.keys(q.options).sort(() => 0.5 - Math.random());
+
+                shuffledKeys.forEach(key => {
+                    optionsHTML += `
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                            <span class="text-gray-800 text-left text-sm md:text-base">${q.options[key]}</span>
+                            <div class="radio-group flex-shrink-0">
+                    `;
+                    ranks.forEach(rank => {
+                        const radioName = `q${qIndex}_${key}`;
+                        optionsHTML += `
+                            <div>
+                                <input type="radio" id="${radioName}_rank${rank}" 
+                                       name="${radioName}" 
+                                       value="${rank}" 
+                                       data-qindex="${qIndex}"
+                                       onclick="handleRankSelection(this)"
+                                       required>
+                                <label for="${radioName}_rank${rank}" class="w-10 h-10">${rank}</label>
+                            </div>
+                        `;
+                    });
+                    optionsHTML += '</div></div>';
+                });
+
+                optionsHTML += '</div>';
+                questionDiv.innerHTML = headerHTML + scaleHTML + errorContainerHTML + optionsHTML;
+                container.appendChild(questionDiv);
+            });
+        }
+
+        document.getElementById('kolb-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            document.querySelectorAll('.question-error').forEach(el => el.classList.remove('question-error'));
+            document.querySelectorAll('.error-message-specific').forEach(el => el.classList.remove('show'));
+
+            const firstErrorBlock = validateFormAndGetErrorBlock();
+            if (firstErrorBlock) {
+                const errorContainer = firstErrorBlock.querySelector('.error-message-specific');
+                if (errorContainer) {
+                    errorContainer.classList.add('show');
+                }
+                
+                firstErrorBlock.classList.add('question-error');
+                
+                const yOffset = -80; 
+                const y = firstErrorBlock.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                window.scrollTo({top: y, behavior: 'smooth'});
+
+                return;
+            }
+            calculateResults();
+            changeView('results-view');
+        });
+        
+        function validateFormAndGetErrorBlock() {
+            for (let i = 0; i < questions.length; i++) {
+                const selectedRanks = new Set();
+                const radiosInQuestion = document.querySelectorAll(`input[data-qindex="${i}"]:checked`);
+                
+                radiosInQuestion.forEach(r => selectedRanks.add(r.value));
+
+                if (radiosInQuestion.length !== 4 || selectedRanks.size !== 4) {
+                    return document.getElementById(`question-block-${i}`);
+                }
+            }
+            return null;
+        }
+
+        function calculateResults() {
+            const scores = { ec: 0, or: 0, ca: 0, ea: 0 };
+            
+            for (let i = 0; i < questions.length; i++) {
+                const checkedRadios = document.querySelectorAll(`input[data-qindex="${i}"]:checked`);
+                checkedRadios.forEach(radio => {
+                    const key = radio.name.split('_')[1];
+                    const rank = parseInt(radio.value, 10);
+                    scores[key] += rank;
+                });
+            }
+
+            document.getElementById('ec-score').textContent = scores.ec;
+            document.getElementById('or-score').textContent = scores.or;
+            document.getElementById('ca-score').textContent = scores.ca;
+            document.getElementById('ea-score').textContent = scores.ea;
+
+            const ca_minus_ec = scores.ca - scores.ec;
+            const ea_minus_or = scores.ea - scores.or;
+
+            let style = '';
+            if (ea_minus_or > 0 && ca_minus_ec > 0) style = 'Convergente';
+            else if (ea_minus_or < 0 && ca_minus_ec > 0) style = 'Assimilador';
+            else if (ea_minus_or < 0 && ca_minus_ec < 0) style = 'Divergente';
+            else style = 'Acomodador';
+
+            document.getElementById('learning-style-result').textContent = style;
+            
+            displayRecommendations(style);
+            createChart(ea_minus_or, ca_minus_ec);
+        }
+        
+        function displayRecommendations(style) {
+            const data = recommendationsData[style];
+            const container = document.getElementById('recommendations-content');
+            let contentHTML = `
+                <p class="mb-4 text-gray-600">${data.description}</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-semibold text-lg mb-2 text-teal-700">Métodos Preferenciais</h4>
+                        <ul class="list-disc list-inside space-y-1">
+                            ${data.methods.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-lg mb-2 text-teal-700">Tipos de Feedback</h4>
+                        <p>${data.feedback}</p>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = contentHTML;
+        }
+
+        function createChart(x_val, y_val) {
+            const ctx = document.getElementById('kolb-chart').getContext('2d');
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+            chartInstance = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Seu Estilo',
+                        data: [{ x: x_val, y: y_val }],
+                        backgroundColor: 'rgb(13, 148, 136)',
+                        pointRadius: 10,
+                        pointHoverRadius: 15
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            min: -30, max: 30,
+                            title: { display: true, text: 'Ação ⟷ Reflexão (EA-OR)' },
+                            grid: { color: (context) => context.tick.value === 0 ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.1)', }
+                        },
+                        y: {
+                            min: -30, max: 30,
+                            title: { display: true, text: 'Conceituação ⟷ Experiência (CA-EC)' },
+                             grid: { color: (context) => context.tick.value === 0 ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.1)', }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` (EA-OR: ${context.parsed.x}, CA-EC: ${context.parsed.y})`;
+                                }
+                            }
+                        }
+                    },
+                },
+                plugins: [{
+                    id: 'quadrant',
+                    beforeDraw: (chart) => {
+                        const {ctx, chartArea: {left, top, right, bottom}, scales: {x, y}} = chart;
+                        ctx.save();
+                        
+                        const chartWidth = chart.width;
+                        const fontSize = chartWidth < 350 ? 10 : 12;
+                        ctx.fillStyle = 'rgba(107, 114, 128, 0.6)';
+                        ctx.font = `bold ${fontSize}px Inter`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        
+                        const xCenter = x.getPixelForValue(0);
+                        const yCenter = y.getPixelForValue(0);
+
+                        ctx.fillText('Acomodador', xCenter + (right-xCenter)/2, yCenter + (bottom-yCenter)/2);
+                        ctx.fillText('Divergente', xCenter - (xCenter-left)/2, yCenter + (bottom-yCenter)/2);
+                        ctx.fillText('Assimilador', xCenter - (xCenter-left)/2, yCenter - (yCenter-top)/2);
+                        ctx.fillText('Convergente', xCenter + (right-xCenter)/2, yCenter - (yCenter-top)/2);
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+
+        window.onload = () => {
+            populateQuestions();
+        };
+
+    </script>
+</body>
+</html>
+```
