@@ -1,482 +1,171 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kolb-MFC: Plano de Ensino Individualizado</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Kolb-MFC</title>
+    <meta name="description" content="Plano de ensino individualizado na preceptoria em Medicina de Família e Comunidade.">
+    <meta name="theme-color" content="#0d9488">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="images/icon-192.png">
+    <link rel="apple-touch-icon" href="images/icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
-    <style>
-        html {
-            scroll-behavior: smooth;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .view {
-            display: none;
-        }
-        .active-view {
-            display: block;
-        }
-        /* Estilização para o formato de botões de rádio */
-        .radio-group {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-        .radio-group label {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 2.5rem;
-            height: 2.5rem;
-            border: 1px solid #d1d5db;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            font-weight: 500;
-        }
-        .radio-group input[type="radio"] {
-            display: none;
-        }
-        .radio-group input[type="radio"]:checked + label {
-            background-color: #0d9488; /* teal-600 */
-            color: white;
-            border-color: #0d9488;
-        }
-        /* Estilo para destacar pergunta com erro */
-        .question-error {
-            border: 2px solid #ef4444; /* red-500 */
-            box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
-            transition: all 0.3s ease-in-out;
-        }
-        .error-message-specific {
-            display: none;
-            color: #dc2626; /* red-600 */
-            font-size: 0.875rem; /* text-sm */
-            margin-top: 0.5rem;
-            text-align: right;
-        }
-        .error-message-specific.show {
-            display: block;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-    <div id="app" class="max-w-4xl mx-auto p-4 md:p-8">
+<div id="app" class="max-w-4xl mx-auto p-4 md:p-8">
 
-        <!-- Cabeçalho -->
-        <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-teal-700">Kolb-MFC</h1>
-            <p class="text-md text-gray-600 mt-2">Plano de Ensino Individualizado na Preceptoria em MFC</p>
-        </header>
+    <header class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-teal-700">Kolb-MFC</h1>
+        <p class="text-md text-gray-600 mt-2">Plano de Ensino Individualizado na Preceptoria em MFC</p>
+    </header>
 
-        <!-- Vista Inicial -->
-        <div id="home-view" class="view active-view bg-white p-6 md:p-8 rounded-xl shadow-md">
-            <h2 class="text-2xl font-bold mb-4">Bem-vindo(a)!</h2>
-            <p class="mb-6">Esta ferramenta foi desenvolvida para apoiar residentes e preceptores de Medicina de Família e Comunidade (MFC) na construção de uma jornada de aprendizagem mais eficaz e personalizada.</p>
-            <p class="mb-6">O aplicativo aplica o Inventário de Estilos de Aprendizagem de Kolb (LSI) para identificar seu perfil e, a partir dele, sugere estratégias de ensino e feedback alinhadas às suas preferências.</p>
-            
-            <div class="mt-8 flex flex-col items-center gap-6">
-                <button onclick="changeView('test-view')" class="w-full md:w-auto bg-teal-600 text-white font-bold py-4 px-8 rounded-lg hover:bg-teal-700 transition-colors shadow-lg text-lg">
-                    Iniciar Inventário Completo
-                </button>
+    <!-- INÍCIO -->
+    <section id="home-view" class="view active-view bg-white p-6 md:p-8 rounded-xl shadow-md">
+        <h2 class="text-2xl font-bold mb-4">Bem-vindo(a)!</h2>
+        <p class="mb-4">Esta ferramenta apoia residentes e preceptores de Medicina de Família e Comunidade (MFC) na construção de uma jornada de aprendizagem mais intencional e personalizada.</p>
+        <p class="mb-4">O residente responde a um questionário de 12 situações baseado no ciclo de aprendizagem experiencial de Kolb. O aplicativo identifica o estilo predominante, sugere estratégias de ensino e feedback e ajuda a criar o Plano de Ensino Individualizado (PEI).</p>
+        <p class="mb-6 text-sm bg-teal-50 text-teal-900 rounded-lg p-3">O resultado mostra uma tendência para orientar a conversa entre preceptor e residente. Não é um rótulo nem um diagnóstico.</p>
+        <div class="flex flex-col sm:flex-row flex-wrap gap-3 justify-center">
+            <button type="button" data-go="register-view" class="btn-primary">Novo residente</button>
+            <button type="button" id="saved-btn" class="btn-secondary">Residentes salvos</button>
+            <button type="button" id="example-btn" class="btn-secondary">Ver exemplo</button>
+        </div>
+        <p id="storage-mode" class="text-sm text-gray-500 text-center mt-6"></p>
+    </section>
 
-                <div class="w-full border-t border-gray-100 pt-6 mt-4">
-                    <p class="text-sm font-semibold text-gray-400 uppercase tracking-wider text-center mb-4">Acesso Rápido para Testes</p>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <button onclick="showStylePreview('Divergente')" class="bg-gray-100 hover:bg-teal-50 text-teal-700 py-2 px-3 rounded text-sm font-medium transition-colors border border-gray-200">Divergente</button>
-                        <button onclick="showStylePreview('Assimilador')" class="bg-gray-100 hover:bg-teal-50 text-teal-700 py-2 px-3 rounded text-sm font-medium transition-colors border border-gray-200">Assimilador</button>
-                        <button onclick="showStylePreview('Convergente')" class="bg-gray-100 hover:bg-teal-50 text-teal-700 py-2 px-3 rounded text-sm font-medium transition-colors border border-gray-200">Convergente</button>
-                        <button onclick="showStylePreview('Acomodador')" class="bg-gray-100 hover:bg-teal-50 text-teal-700 py-2 px-3 rounded text-sm font-medium transition-colors border border-gray-200">Acomodador</button>
-                    </div>
+    <!-- CADASTRO DO RESIDENTE -->
+    <section id="register-view" class="view bg-white p-6 md:p-8 rounded-xl shadow-md">
+        <h2 class="text-2xl font-bold mb-2">Dados do residente</h2>
+        <p class="mb-6 text-gray-600">Estes dados ficam salvos junto com o estilo de aprendizagem e o plano de ensino.</p>
+        <form id="register-form" class="grid md:grid-cols-2 gap-4">
+            <label class="field">Nome do residente
+                <input id="student-name" name="student-name" required class="input" placeholder="Ex.: Maria Souza">
+            </label>
+            <label class="field">Ano de residência
+                <select id="student-year" name="student-year" class="input"><option>R1</option><option>R2</option><option>R3</option></select>
+            </label>
+            <label class="field">Preceptor(a)
+                <input id="preceptor-name" name="preceptor-name" class="input" placeholder="Ex.: Dr. João Lima">
+            </label>
+            <label class="field">Unidade de saúde
+                <input id="unit-name" name="unit-name" class="input" placeholder="Ex.: UBS Centro">
+            </label>
+            <div class="md:col-span-2 flex flex-col md:flex-row gap-3 mt-2">
+                <button type="submit" class="btn-primary">Iniciar questionário</button>
+                <button type="button" data-go="home-view" class="btn-secondary">Cancelar</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- QUESTIONÁRIO -->
+    <section id="test-view" class="view bg-white p-6 md:p-8 rounded-xl shadow-md">
+        <h2 class="text-2xl font-bold mb-2">Questionário Kolb-MFC</h2>
+        <p class="mb-4 text-gray-600">Em cada situação, classifique as quatro afirmações. Dê <strong>4</strong> para a que mais se parece com você e <strong>1</strong> para a que menos se parece. Cada número é usado uma única vez por situação; ao escolher três, o quarto é marcado sozinho.</p>
+        <div class="sticky-progress">
+            <div class="h-2 bg-gray-200 rounded-full overflow-hidden"><div id="progress-bar" class="h-full bg-teal-600 transition-all" style="width:0"></div></div>
+            <p id="progress-text" class="text-sm text-gray-500 mt-1"></p>
+        </div>
+        <form id="kolb-form" novalidate>
+            <div id="questions-container" class="space-y-6 mt-4"></div>
+            <div id="error-message" role="alert"></div>
+            <div class="mt-8 flex flex-col md:flex-row gap-3">
+                <button type="submit" class="btn-primary">Ver meu resultado</button>
+                <button type="button" data-go="home-view" class="btn-secondary">Cancelar</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- RESULTADO -->
+    <section id="results-view" class="view bg-white p-6 md:p-8 rounded-xl shadow-md">
+        <p id="example-flag" class="hidden mb-4 text-sm font-semibold text-orange-700 bg-orange-50 rounded-lg p-2">Exemplo com respostas simuladas</p>
+        <h2 class="text-2xl font-bold mb-1">Resultado de <span id="result-name"></span></h2>
+        <p id="result-saved" class="text-sm text-teal-700 mb-4"></p>
+        <div class="grid md:grid-cols-2 gap-8">
+            <div>
+                <h3 class="text-lg font-semibold">Estilo de aprendizagem predominante</h3>
+                <p id="learning-style-result" class="text-3xl font-bold text-teal-700 mt-1"></p>
+                <p id="style-description" class="text-gray-600 mt-3"></p>
+                <h4 class="font-semibold text-lg mt-6 mb-3">Pontuações (12 a 48)</h4>
+                <ul id="score-bars" class="space-y-3"></ul>
+            </div>
+            <div class="chart-box">
+                <canvas id="kolb-chart" aria-label="Posição do residente nos quadrantes de Kolb"></canvas>
+            </div>
+        </div>
+        <div class="mt-8 pt-6 border-t border-gray-200">
+            <h3 class="text-xl font-semibold mb-4">Recomendações pedagógicas</h3>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div>
+                    <h4 class="font-semibold mb-2 text-teal-700">Métodos preferenciais</h4>
+                    <ul id="rec-preferred" class="list-disc list-inside space-y-1"></ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-2 text-teal-700">Para completar o ciclo</h4>
+                    <ul id="rec-develop" class="list-disc list-inside space-y-1"></ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-2 text-teal-700">Tipo de feedback</h4>
+                    <p id="rec-feedback"></p>
                 </div>
             </div>
         </div>
-
-        <!-- Vista do Teste -->
-        <div id="test-view" class="view bg-white p-6 md:p-8 rounded-xl shadow-md">
-            <h2 class="text-2xl font-bold mb-2">Inventário de Estilos de Aprendizagem</h2>
-            <p class="mb-6 text-gray-600">Para cada grupo de sentenças, classifique as quatro afirmações. Atribua <strong>1</strong> para a que menos se parece com você, e assim por diante, até <strong>4</strong> para a que melhor descreve como você aprende. Cada rank (1, 2, 3, 4) deve ser usado apenas uma vez por grupo.</p>
-            <form id="kolb-form" novalidate>
-                <div id="questions-container" class="space-y-10"></div>
-                <div class="mt-8 flex flex-col md:flex-row gap-4">
-                    <button type="submit" class="w-full md:w-auto bg-teal-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-700 transition-colors shadow">Ver Meu Resultado</button>
-                    <button type="button" onclick="changeView('home-view')" class="w-full md:w-auto bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">Cancelar</button>
-                </div>
-            </form>
+        <div class="mt-8 flex flex-col md:flex-row gap-3 justify-center">
+            <button type="button" id="plan-btn" class="btn-primary">Criar plano de ensino</button>
+            <button type="button" id="retake-btn" class="btn-secondary">Refazer questionário</button>
+            <button type="button" data-go="home-view" class="btn-secondary">Concluir</button>
         </div>
+    </section>
 
-        <!-- Vista de Resultados -->
-        <div id="results-view" class="view bg-white p-6 md:p-8 rounded-xl shadow-md">
-            <div class="flex justify-between items-start mb-4">
-                <h2 class="text-2xl font-bold">Seu Resultado</h2>
-                <button onclick="changeView('home-view')" class="text-teal-600 hover:text-teal-800 font-medium text-sm">← Voltar</button>
+    <!-- PLANO DE ENSINO -->
+    <section id="plan-view" class="view bg-white p-6 md:p-8 rounded-xl shadow-md">
+        <h2 class="text-2xl font-bold mb-1">Plano de Ensino Individualizado (PEI)</h2>
+        <p id="plan-summary" class="text-gray-600 mb-6"></p>
+        <form id="plan-form" class="space-y-4">
+            <div class="grid md:grid-cols-2 gap-4">
+                <label class="field">Data do plano<input type="date" id="plan-date" name="plan-date" class="input" required></label>
+                <label class="field">Data de revisão<input type="date" id="review-date" name="review-date" class="input"></label>
             </div>
-            
-            <div class="flex flex-col md:grid md:grid-cols-2 md:gap-8">
-                <!-- Resultados Textuais -->
-                <div class="mb-8 md:mb-0">
-                    <h3 class="text-xl font-semibold mb-2">Seu Estilo de Aprendizagem é:</h3>
-                    <p id="learning-style-result" class="text-3xl font-bold text-teal-700"></p>
-                    <div class="mt-6">
-                        <h4 class="font-semibold text-lg mb-2">Pontuações:</h4>
-                        <ul class="space-y-2 text-gray-700">
-                            <li><strong>EC</strong> (Experiência Concreta): <span id="ec-score"></span></li>
-                            <li><strong>OR</strong> (Observação Reflexiva): <span id="or-score"></span></li>
-                            <li><strong>CA</strong> (Conceituação Abstrata): <span id="ca-score"></span></li>
-                            <li><strong>EA</strong> (Experimentação Ativa): <span id="ea-score"></span></li>
-                        </ul>
-                    </div>
-                </div>
-                <!-- Contentor do Gráfico -->
-                <div class="w-full h-80 md:h-full">
-                    <canvas id="kolb-chart"></canvas>
-                </div>
+            <label class="field">Competências priorizadas (Currículo Baseado em Competências da SBMFC)
+                <textarea id="competencies" name="competencies" rows="3" class="input" placeholder="Ex.: abordagem familiar; saúde da mulher; procedimentos ambulatoriais."></textarea>
+            </label>
+            <label class="field">Metas SMART acordadas
+                <textarea id="goals" name="goals" rows="4" class="input" placeholder="Metas específicas, mensuráveis, alcançáveis, relevantes e com prazo."></textarea>
+            </label>
+            <fieldset>
+                <legend class="font-semibold mb-2">Estratégias de ensino escolhidas</legend>
+                <div id="strategies" class="grid md:grid-cols-2 gap-4"></div>
+            </fieldset>
+            <label class="field">Cenários de prática
+                <textarea id="settings" name="settings" rows="2" class="input" placeholder="Consultório, visita domiciliar, grupos, reunião de equipe, procedimentos."></textarea>
+            </label>
+            <label class="field">Acompanhamento e feedback
+                <textarea id="feedback-plan" name="feedback-plan" rows="3" class="input"></textarea>
+            </label>
+            <div class="flex flex-col md:flex-row gap-3 pt-2">
+                <button type="submit" class="btn-primary">Salvar plano</button>
+                <button type="button" id="print-btn" class="btn-secondary">Imprimir ou salvar PDF</button>
+                <button type="button" data-go="results-view" class="btn-secondary">Voltar</button>
             </div>
-            <div id="recommendations" class="mt-8 pt-6 border-t border-gray-200">
-                <h3 class="text-xl font-semibold mb-4">Recomendações Pedagógicas</h3>
-                <div id="recommendations-content"></div>
-            </div>
-            <div class="mt-8 text-center">
-                <button onclick="changeView('home-view')" class="bg-teal-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-700 transition-colors shadow">Concluir</button>
-            </div>
-        </div>
-    </div>
+            <p id="plan-msg" class="text-sm text-teal-700" aria-live="polite"></p>
+        </form>
+    </section>
 
-    <script>
-        // --- DADOS ---
-        const questions = [
-            { stem: "Quando aprendo:", options: { ec: "Gosto de lidar com meus sentimentos.", or: "Gosto de observar e escutar.", ca: "Gosto de pensar sobre ideias.", ea: "Gosto de estar fazendo coisas." } },
-            { stem: "Aprendo melhor quando:", options: { or: "Escuto e observo com cuidado.", ca: "Confio na análise lógica.", ec: "Confio nos meus sentimentos.", ea: "Trabalho duro para ter as coisas prontas." } },
-            { stem: "Quando estou aprendendo:", options: { ec: "Sou sentimental.", ea: "Sou ativo.", or: "Sou observador.", ca: "Sou lógico." } },
-            { stem: "Eu aprendo por:", options: { ea: "Fazer.", ec: "Sentir.", or: "Observar.", ca: "Pensar." } },
-            { stem: "Quando aprendo:", options: { ec: "Estou aberto a novas experiências.", or: "Olho todos os lados da questão.", ca: "Gosto de analisar as coisas.", ea: "Gosto de experimentar." } },
-            { stem: "Quando estou aprendendo:", options: { ca: "Sou uma pessoa racional.", ea: "Sou uma pessoa ativa.", ec: "Sou uma pessoa intuitiva.", or: "Sou uma pessoa reflexiva." } },
-            { stem: "Aprendo melhor com:", options: { ca: "Observação.", ec: "Relacionamentos pessoais.", or: "Teorias racionais.", ea: "Oportunidade de experimentar." } },
-            { stem: "Quando aprendo:", options: { ca: "Gosto de ideias e teorias.", ea: "Gosto de ter utilidade prática.", ec: "Levo as pessoas e seus sentimentos em conta.", or: "Levo em conta todas as alternativas." } },
-            { stem: "Aprendo melhor quando:", options: { ea: "Confio nas minhas observações.", ca: "Confio nas minhas ideias.", ec: "Confio nos meus sentimentos.", or: "Posso ser lógico e racional." } },
-            { stem: "Quando estou aprendendo:", options: { ea: "Sou uma pessoa responsável.", or: "Sou uma pessoa reservada.", ca: "Sou uma pessoa racional.", ec: "Sou uma pessoa de grupo." } },
-            { stem: "Quando aprendo:", options: { or: "Gosto de ver o quadro geral.", ea: "Gosto de ir direto ao ponto.", ca: "Sigo a lógica.", ec: "Gosto de saber o que os outros pensam." } },
-            { stem: "Eu aprendo por:", options: { ca: "Análise.", ea: "Prática.", ec: "Intuição.", or: "Observação cuidadosa." } }
-        ];
+    <!-- RESIDENTES SALVOS -->
+    <section id="saved-view" class="view bg-white p-6 md:p-8 rounded-xl shadow-md">
+        <h2 class="text-2xl font-bold mb-4">Residentes salvos</h2>
+        <ul id="saved-list" class="space-y-3"></ul>
+        <div class="mt-6"><button type="button" data-go="home-view" class="btn-secondary">Início</button></div>
+    </section>
 
-        const recommendationsData = {
-            Divergente: {
-                description: "DIVERGENTE (OR/EC) – você aprende melhor combinando sensações com observações, ou seja através de atividades práticas seguidas de um retorno. Possui muita sensibilidade artística e conseguem ver as coisas de perspectivas diferentes. Prefere observar ao invés de agir. Suas estratégias para a solução de problemas iniciam coletando informações para em seguida usarem a criatividade e a inventividade para oferecer mais de uma solução possível. A denominação “divergentes” se dá pelo fato de terem bom desempenho em situações que requerem geração de ideias, como grupos de trabalho e brainstorms. Possuem vasto interesse cultural e gostam de pessoas. Preferem trabalhar em grupo, ouvindo sugestões com mente aberta e recebendo feedbacks pessoais. Gostam de autonomia na busca de conhecimento. Esse estilo também é conhecido como REFLEXIVO.",
-                methods: ["Discussões em grupo (brainstorming)", "Estudos de caso com foco em pessoas e narrativas", "Sessões de feedback que exploram sentimentos e relações", "Atividades que envolvam coleta de informações e escuta ativa"],
-                feedback: "O feedback deve ser pessoal, descritivo e observacional. Explore como as situações fizeram o residente se sentir e o que ele observou nos outros."
-            },
-            Assimilador: {
-                description: "ASSIMILADOR (CA/OR) – você aprende melhor combinando observação e pensamento, por isso suas preferências por palestras, conferências e aulas. Para eles, ideias e conceitos abstratos são mais importantes do que pessoas e pode ser percebido como pouco sociável. Tem facilidade com números e modelos conceituais, preferindo especulações abstratas em detrimento de situações práticas. Compreende as informações de forma ampla e as organizam de forma clara e lógica. Tem propensão para a carreira científica. Gosta de explorar modelos analíticos e de ter tempo para pensar e refletir sobre as coisas. Esse estilo também é conhecido como TEÓRICO.",
-                methods: ["Leitura crítica de artigos e diretrizes", "Aulas expositivas e seminários teóricos", "Construção de mapas conceituais e modelos explicativos", "Análise de dados e estatísticas de saúde da comunidade"],
-                feedback: "O feedback deve ser analítico, baseado em evidências e focado na lógica do raciocínio clínico. Aponte para a consistência teórica."
-            },
-            Convergente: {
-                description: "CONVERGENTE (EA/CA) – Você aprende melhor pensando e realizando. Combina o gosto de colocar “a mão na massa” com aspectos teóricos. Gosta de realizar atividades com indicações sequenciais detalhadas (como aquelas dos manuais de operação de aparelhos), solucionar problemas específicos e testar hipóteses (tentativa e erro). Tem habilidades em encontrar aplicações práticas para ideias e teorias. Pessoas desse estilo possuem poucas habilidades sociais e intrapessoais, preferindo ambientes de aprendizagem mais tranquilos (ex.: gosta de trabalha sozinho realizando tarefas técnicas sem se relacionarem com outras pessoas). Parecem se sair melhor em situações nas quais existe uma única resposta ou solução correta para cada pergunta ou problema. Não tem dificuldades ao experimentar inovações para solucionar problemas práticos. Esse estilo também é conhecido como PRAGMÁTICO.",
-                methods: ["Simulações realísticas e role-playing de atendimentos", "Projetos de melhoria de processos na UBS", "Resolução de problemas clínicos estruturados", "Treinamento de habilidades e procedimentos práticos"],
-                feedback: "O feedback deve ser pragmático, direto e focado nos resultados e na eficácia da solução. 'Isso funcionou? Como podemos tornar mais eficiente?'"
-            },
-            Acomodador: {
-                description: "ACOMODADOR (EC/EA) – Você aprende melhor experimentando e realizando, como, por exemplo, através de atividades práticas, apresentações, role-plays e debates. Combina o gosto de colocar “a mão na massa” com atividades concretas. Tem capacidade de se sobressair e acomodar ou adaptar a circunstâncias imediatas específicas. Utiliza mais a intuição do que a lógica e tem a tendência a se arriscar mais a ousar mais. Costuma utilizar a opinião de outras pessoas ao invés das suas próprias, por isso geralmente faz muitas perguntas. Assume uma abordagem prática e vivencial. É sociável e gosta de trabalhar em equipe. Geralmente exerce um papel importante em situações onde são necessárias ações e iniciativas para a realização de tarefas. Por terem pouca habilidade analítica são impulsivas e as vezes é percebido como impaciente e pressionador. Esse estilo também é conhecido como ATIVISTA.",
-                methods: ["Atividades práticas e atendimentos diretos (aprender fazendo)", "Projetos comunitários e visitas domiciliares", "Oficinas e atividades em grupo que exijam ação", "Experimentar diferentes abordagens de comunicação com pacientes"],
-                feedback: "O feedback deve ser exploratório e encorajar a experimentação. Foque no que foi aprendido com a ação, mesmo que o resultado não tenha sido o esperado."
-            }
-        };
+    <footer class="text-center text-sm text-gray-500 mt-8">Kolb-MFC · produto técnico educacional · questionário autoral baseado em Kolb (1984)</footer>
+</div>
 
-        // --- LÓGICA DA APLICAÇÃO ---
-        let currentView = 'home-view';
-        let chartInstance = null;
-
-        function changeView(viewId) {
-            document.getElementById(currentView).classList.remove('active-view');
-            document.getElementById(viewId).classList.add('active-view');
-            currentView = viewId;
-            window.scrollTo(0, 0);
-        }
-
-        // Função para testar os perfis sem preencher o formulário
-        function showStylePreview(style) {
-            let ea_or, ca_ec, scores;
-            
-            // Define coordenadas fictícias para cada quadrante e pontuações de exemplo
-            switch(style) {
-                case 'Divergente':
-                    ea_or = -15; ca_ec = -15;
-                    scores = { ec: 35, or: 35, ca: 20, ea: 20 };
-                    break;
-                case 'Assimilador':
-                    ea_or = -15; ca_ec = 15;
-                    scores = { ec: 20, or: 35, ca: 35, ea: 20 };
-                    break;
-                case 'Convergente':
-                    ea_or = 15; ca_ec = 15;
-                    scores = { ec: 20, or: 20, ca: 35, ea: 35 };
-                    break;
-                case 'Acomodador':
-                    ea_or = 15; ca_ec = -15;
-                    scores = { ec: 35, or: 20, ca: 20, ea: 35 };
-                    break;
-            }
-
-            // Atualiza o UI com os dados de teste
-            document.getElementById('ec-score').textContent = scores.ec;
-            document.getElementById('or-score').textContent = scores.or;
-            document.getElementById('ca-score').textContent = scores.ca;
-            document.getElementById('ea-score').textContent = scores.ea;
-            document.getElementById('learning-style-result').textContent = style;
-            
-            displayRecommendations(style);
-            createChart(ea_or, ca_ec);
-            changeView('results-view');
-        }
-
-        function handleRankSelection(clickedRadio) {
-            const qIndex = clickedRadio.dataset.qindex;
-            const rank = clickedRadio.value;
-            const currentName = clickedRadio.name;
-
-            const allRadiosInQuestion = document.querySelectorAll(`input[data-qindex="${qIndex}"]`);
-
-            allRadiosInQuestion.forEach(radio => {
-                if (radio.name !== currentName && radio.value === rank) {
-                    radio.checked = false;
-                }
-            });
-        }
-
-        function populateQuestions() {
-            const container = document.getElementById('questions-container');
-            container.innerHTML = '';
-            const ranks = [1, 2, 3, 4];
-
-            questions.forEach((q, qIndex) => {
-                const questionDiv = document.createElement('div');
-                questionDiv.className = 'question-block p-4 border border-gray-200 rounded-lg';
-                questionDiv.id = `question-block-${qIndex}`;
-
-                let headerHTML = `<p class="font-semibold mb-4">${qIndex + 1}. ${q.stem}</p>`;
-
-                let scaleHTML = `
-                    <div class="flex justify-end mb-2">
-                        <div class="w-full sm:w-auto sm:min-w-[11.5rem]">
-                            <div class="flex justify-between items-center text-center font-bold text-gray-700 px-1">
-                                <span>1</span><span>2</span><span>3</span><span>4</span>
-                            </div>
-                            <div class="relative w-full h-1.5 bg-gray-200 rounded-full mt-1">
-                                <div class="absolute h-1.5 bg-gradient-to-r from-teal-200 to-teal-500 rounded-full w-full"></div>
-                            </div>
-                            <div class="flex justify-between items-center text-center font-medium text-gray-500 text-xs mt-1 px-1">
-                                <span>Menos</span><span>Mais</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                let errorContainerHTML = `<div id="error-container-${qIndex}" class="error-message-specific">Por favor, use os ranks 1, 2, 3 e 4 exatamente uma vez.</div>`;
-
-                let optionsHTML = '<div class="space-y-4 mt-4">';
-                const shuffledKeys = Object.keys(q.options).sort(() => 0.5 - Math.random());
-
-                shuffledKeys.forEach(key => {
-                    optionsHTML += `
-                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                            <span class="text-gray-800 text-left text-sm md:text-base">${q.options[key]}</span>
-                            <div class="radio-group flex-shrink-0">
-                    `;
-                    ranks.forEach(rank => {
-                        const radioName = `q${qIndex}_${key}`;
-                        optionsHTML += `
-                            <div>
-                                <input type="radio" id="${radioName}_rank${rank}" 
-                                       name="${radioName}" 
-                                       value="${rank}" 
-                                       data-qindex="${qIndex}"
-                                       onclick="handleRankSelection(this)"
-                                       required>
-                                <label for="${radioName}_rank${rank}" class="w-10 h-10">${rank}</label>
-                            </div>
-                        `;
-                    });
-                    optionsHTML += '</div></div>';
-                });
-
-                optionsHTML += '</div>';
-                questionDiv.innerHTML = headerHTML + scaleHTML + errorContainerHTML + optionsHTML;
-                container.appendChild(questionDiv);
-            });
-        }
-
-        document.getElementById('kolb-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            document.querySelectorAll('.question-error').forEach(el => el.classList.remove('question-error'));
-            document.querySelectorAll('.error-message-specific').forEach(el => el.classList.remove('show'));
-
-            const firstErrorBlock = validateFormAndGetErrorBlock();
-            if (firstErrorBlock) {
-                const errorContainer = firstErrorBlock.querySelector('.error-message-specific');
-                if (errorContainer) {
-                    errorContainer.classList.add('show');
-                }
-                
-                firstErrorBlock.classList.add('question-error');
-                
-                const yOffset = -80; 
-                const y = firstErrorBlock.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                window.scrollTo({top: y, behavior: 'smooth'});
-
-                return;
-            }
-            calculateResults();
-            changeView('results-view');
-        });
-        
-        function validateFormAndGetErrorBlock() {
-            for (let i = 0; i < questions.length; i++) {
-                const selectedRanks = new Set();
-                const radiosInQuestion = document.querySelectorAll(`input[data-qindex="${i}"]:checked`);
-                
-                radiosInQuestion.forEach(r => selectedRanks.add(r.value));
-
-                if (radiosInQuestion.length !== 4 || selectedRanks.size !== 4) {
-                    return document.getElementById(`question-block-${i}`);
-                }
-            }
-            return null;
-        }
-
-        function calculateResults() {
-            const scores = { ec: 0, or: 0, ca: 0, ea: 0 };
-            
-            for (let i = 0; i < questions.length; i++) {
-                const checkedRadios = document.querySelectorAll(`input[data-qindex="${i}"]:checked`);
-                checkedRadios.forEach(radio => {
-                    const key = radio.name.split('_')[1];
-                    const rank = parseInt(radio.value, 10);
-                    scores[key] += rank;
-                });
-            }
-
-            document.getElementById('ec-score').textContent = scores.ec;
-            document.getElementById('or-score').textContent = scores.or;
-            document.getElementById('ca-score').textContent = scores.ca;
-            document.getElementById('ea-score').textContent = scores.ea;
-
-            const ca_minus_ec = scores.ca - scores.ec;
-            const ea_minus_or = scores.ea - scores.or;
-
-            let style = '';
-            if (ea_minus_or > 0 && ca_minus_ec > 0) style = 'Convergente';
-            else if (ea_minus_or < 0 && ca_minus_ec > 0) style = 'Assimilador';
-            else if (ea_minus_or < 0 && ca_minus_ec < 0) style = 'Divergente';
-            else style = 'Acomodador';
-
-            document.getElementById('learning-style-result').textContent = style;
-            
-            displayRecommendations(style);
-            createChart(ea_minus_or, ca_minus_ec);
-        }
-        
-        function displayRecommendations(style) {
-            const data = recommendationsData[style];
-            const container = document.getElementById('recommendations-content');
-            let contentHTML = `
-                <p class="mb-4 text-gray-600">${data.description}</p>
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <h4 class="font-semibold text-lg mb-2 text-teal-700">Métodos Preferenciais</h4>
-                        <ul class="list-disc list-inside space-y-1">
-                            ${data.methods.map(item => `<li>${item}</li>`).join('')}
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold text-lg mb-2 text-teal-700">Tipos de Feedback</h4>
-                        <p>${data.feedback}</p>
-                    </div>
-                </div>
-            `;
-            container.innerHTML = contentHTML;
-        }
-
-        function createChart(x_val, y_val) {
-            const ctx = document.getElementById('kolb-chart').getContext('2d');
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
-            chartInstance = new Chart(ctx, {
-                type: 'scatter',
-                data: {
-                    datasets: [{
-                        label: 'Seu Estilo',
-                        data: [{ x: x_val, y: y_val }],
-                        backgroundColor: 'rgb(13, 148, 136)',
-                        pointRadius: 10,
-                        pointHoverRadius: 15
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            min: -30, max: 30,
-                            title: { display: true, text: 'Ação ⟷ Reflexão (EA-OR)' },
-                            grid: { color: (context) => context.tick.value === 0 ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.1)', }
-                        },
-                        y: {
-                            min: -30, max: 30,
-                            title: { display: true, text: 'Conceituação ⟷ Experiência (CA-EC)' },
-                             grid: { color: (context) => context.tick.value === 0 ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.1)', }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return ` (EA-OR: ${context.parsed.x}, CA-EC: ${context.parsed.y})`;
-                                }
-                            }
-                        }
-                    },
-                },
-                plugins: [{
-                    id: 'quadrant',
-                    beforeDraw: (chart) => {
-                        const {ctx, chartArea: {left, top, right, bottom}, scales: {x, y}} = chart;
-                        ctx.save();
-                        
-                        const chartWidth = chart.width;
-                        const fontSize = chartWidth < 350 ? 10 : 12;
-                        ctx.fillStyle = 'rgba(107, 114, 128, 0.6)';
-                        ctx.font = `bold ${fontSize}px Inter`;
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        
-                        const xCenter = x.getPixelForValue(0);
-                        const yCenter = y.getPixelForValue(0);
-
-                        ctx.fillText('Acomodador', xCenter + (right-xCenter)/2, yCenter + (bottom-yCenter)/2);
-                        ctx.fillText('Divergente', xCenter - (xCenter-left)/2, yCenter + (bottom-yCenter)/2);
-                        ctx.fillText('Assimilador', xCenter - (xCenter-left)/2, yCenter - (yCenter-top)/2);
-                        ctx.fillText('Convergente', xCenter + (right-xCenter)/2, yCenter - (yCenter-top)/2);
-                        ctx.restore();
-                    }
-                }]
-            });
-        }
-
-        window.onload = () => {
-            populateQuestions();
-        };
-
-    </script>
+<script src="app.js"></script>
 </body>
 </html>
-```
